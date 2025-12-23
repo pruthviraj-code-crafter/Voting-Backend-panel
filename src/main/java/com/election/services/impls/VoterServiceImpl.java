@@ -1,6 +1,10 @@
 package com.election.services.impls;
 
 import com.election.modals.AppAdmin;
+import com.google.gson.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import org.springframework.web.client.RestTemplate;
 import com.election.modals.AppUser;
 import com.election.modals.Ward;
 import com.election.modals.requests.AdminRequest;
@@ -15,6 +19,7 @@ import com.election.repositories.AppUserRepository;
 import com.election.repositories.VoterRepository;
 import com.election.repositories.WardRepository;
 import com.election.services.VoterService;
+import com.google.gson.JsonArray;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
@@ -25,11 +30,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,7 +48,6 @@ public class VoterServiceImpl implements VoterService {
     private final VoterRepository voterRepository;
     private final PaginationResponseImpl paginationResponse;
     private final AppAdminRepository userRepository;
-    private final AppUserRepository appUserRepository;
     private final WardRepository wardRepository;
 
     @Transactional
@@ -146,12 +152,21 @@ public class VoterServiceImpl implements VoterService {
 
     @Override
     public List<VoterResponse> searchVoters(String keyword, Long userId) {
+
         if (keyword == null || keyword.trim().isEmpty() || userId == null) {
             return Collections.emptyList();
         }
 
+        // If English → Convert to Marathi
+        if (isEnglish(keyword.trim())) {
+            keyword = transliterateToMarathi(keyword.trim());
+        }
+
+
+        String finalKeyword = keyword;
+
         Specification<Voter> spec = (root, query, cb) -> {
-            String likePattern = "%" + keyword.trim().toLowerCase() + "%";
+            String likePattern = "%" + finalKeyword + "%";
 
             return cb.and(
                     cb.equal(root.get("admin").get("id"), userId), // Filter by user
@@ -172,15 +187,55 @@ public class VoterServiceImpl implements VoterService {
                 .toList();
     }
 
+    public boolean isEnglish(String text) {
+        return text.matches("^[a-zA-Z0-9\\s]+$");
+    }
+
+
+    public String transliterateToMarathi(String text) {
+        try {
+            String url = "https://inputtools.google.com/request?text=" +
+                    URLEncoder.encode(text, StandardCharsets.UTF_8) +
+                    "&itc=mr-t-i0-und&num=1";
+
+            RestTemplate restTemplate = new RestTemplate();
+            String response = restTemplate.getForObject(url, String.class);
+
+            JsonElement jsonElement = JsonParser.parseString(response);
+            JsonArray rootArray = jsonElement.getAsJsonArray();
+
+            // Check status
+            if ("SUCCESS".equals(rootArray.get(0).getAsString())) {
+
+                JsonArray candidates =
+                        rootArray.get(1).getAsJsonArray()
+                                .get(0).getAsJsonArray()
+                                .get(1).getAsJsonArray();
+
+                return candidates.get(0).getAsString(); // Marathi text
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return text;
+    }               
 
     @Override
     public List<VoterResponse> searchPublicVoters(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
+
+        if (keyword == null || keyword.trim().isEmpty() ) {
             return Collections.emptyList();
         }
 
+        // If English → Convert to Marathi
+        if (isEnglish(keyword.trim())) {
+            keyword = transliterateToMarathi(keyword.trim());
+        }
+
+        String finalKeyword = keyword;
+
         Specification<Voter> spec = (root, query, cb) -> {
-            String likePattern = "%" + keyword.trim().toLowerCase() + "%";
+            String likePattern = "%" + finalKeyword + "%";
 
             return cb.or(
                     cb.like(cb.lower(root.get("epic")), likePattern),
@@ -282,6 +337,18 @@ public class VoterServiceImpl implements VoterService {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Boolean updateVoterNumber(Long id, String mobileNumber) {
+        Optional<Voter> optionalVoter = voterRepository.findById(id);
+        if (optionalVoter.isPresent()) {
+            Voter voter = optionalVoter.get();
+            voter.setNumber(mobileNumber);
+            voterRepository.save(voter);
+            return true;
+        }
+        throw new RuntimeException("Voter not found");
     }
 
     @Override

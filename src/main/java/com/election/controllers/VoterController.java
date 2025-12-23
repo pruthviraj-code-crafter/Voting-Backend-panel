@@ -47,6 +47,18 @@ public class VoterController {
         }
     }
 
+
+    @GetMapping("/search-public")
+    public ResponseEntity<?> searchPublicVoters(@RequestParam String keyword) {
+//        System.out.println("Public search keyword: " + keyword);
+        try {
+            return ResponseEntity.ok(voterService.searchPublicVoters(keyword));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("❌ Error: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/get-by-id")
     public ResponseEntity<?> getVoterById(@RequestParam Long id) {
         try {
@@ -78,6 +90,11 @@ public class VoterController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("❌ Error: Voter update failed");
         }
+    }
+
+    @PutMapping("/update-mobile")
+    public ResponseEntity<?> updateVoterMobile(@RequestParam Long id , @RequestParam String mobileNumber) {
+        return ResponseEntity.ok(voterService.updateVoterNumber(id, mobileNumber));
     }
 
     @GetMapping("/get-by-house")
@@ -217,16 +234,7 @@ public class VoterController {
         return ResponseEntity.ok(count);
     }
 
-    @GetMapping("/search-public")
-    public ResponseEntity<?> searchPublicVoters(@RequestParam String keyword) {
-        System.out.println("Public search keyword: " + keyword);
-        try {
-            return ResponseEntity.ok(voterService.searchPublicVoters(keyword));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("❌ Error: " + e.getMessage());
-        }
-    }
+
 
     @GetMapping("/get-voter-report")
     public ResponseEntity<?> getVoterReport(@RequestParam Long userId) {

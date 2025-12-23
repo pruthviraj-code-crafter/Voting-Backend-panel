@@ -24,6 +24,8 @@ public interface VoterService {
 
     Boolean UpdateVoter(VoterRequest voter);
 
+    Boolean updateVoterNumber(Long id , String mobileNumber);
+
     Map<String, List<VoterResponse>> getVotersGroupedByHouseNumber(Long userId);
 
     Map<String, List<VoterResponse>> getVotersGroupedByHouseNumberV2(Long userId);

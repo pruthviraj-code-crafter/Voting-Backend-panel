@@ -34,7 +34,7 @@ public class SecurityConfigure {
         return security.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/login", "/v3/api-docs/**", "/api/voter/search-public","/api/voter/get-all", "/api/auth/translate","/swagger-ui/**", "/swagger-ui.html", "/api/service/test", "/chat","/auth/**",
-                                    "/api/service/is-token-expired","/api/user-management/get-all-roles","/test").permitAll()
+                                    "/api/service/is-token-expired","/api/user-management/get-all-roles","/test","/api/voter/update-mobile").permitAll()
                             .requestMatchers(HttpMethod.OPTIONS).permitAll()
                             .anyRequest().authenticated();
                 })

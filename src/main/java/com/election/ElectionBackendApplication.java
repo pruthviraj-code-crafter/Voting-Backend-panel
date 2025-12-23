@@ -13,8 +13,8 @@ import org.springframework.web.service.annotation.GetExchange;
 
 @OpenAPIDefinition(
         info = @Info(
-                title = "UMBRELLA project REST API Documentation",
-                description = "UMBRELLA application REST API Documentation",
+                title = "VAVYUG project REST API Documentation",
+                description = "VAVYUG application REST API Documentation",
                 version="v1",
                 contact = @Contact(
                         name = "Code-crafter",
@@ -23,7 +23,7 @@ import org.springframework.web.service.annotation.GetExchange;
                 )
         ),
         externalDocs = @ExternalDocumentation(
-                description = "UMBRELLA application REST API Documentation",
+                description = "VAVYUG application REST API Documentation",
                 url = "https://code-crafter.in"
         )
 )
